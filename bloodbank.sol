@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 
 contract BloodBank {
     // set the owner of the contract
-    address owner;
+    address owner; 
 
     constructor() {
         owner = msg.sender;
@@ -40,32 +40,27 @@ contract BloodBank {
     // Array to store all the patientRecord
     // Array is used so that all the patientRecord can be fetched at once
     Patient[] PatientRecord;
+    PatientType Ptype;
 
     // map is used to map the addhar card with the index number of the array where patient record is stored
     // this will prevent the use of loop in contract
     mapping(uint256 => uint256) PatientRecordIndex;
-    mapping(bool => uint256) Registered;
+    mapping(uint256 => bool) Registered;
+    
 
     // used for notifying if function is executed or not
     event Successfull(string message);
 
     // Register a new patient
-    function newPatient(
-        string memory _name,
-        uint256 _age,
-        string memory _bloodGroup,
-        uint256 _contact,
-        string memory _homeAddress,
-        uint256 _aadhar,
-        bool _registered
-
-    ) external {
-        // Since patient can be only registered by the hospital hence its required to check if the sender
-        // is owner or not
-        require(msg.sender == owner, "only admin can register new patient");
-
+    function newPatient(string memory _name,uint256 _age,string memory _bloodGroup,uint256 _contact,string memory _homeAddress,uint256 _aadhar,bool _registered) external {
+        
         // get the legth of array
         uint256 index = PatientRecord.length;
+
+        // Since patient can be only registered by the hospital hence its required to check if the sender is owner or not
+        require(msg.sender == owner, "only admin can register new patient");
+        require(Registered[_aadhar] != true, "Patient is already registered");
+        
 
         // insert records
         PatientRecord.push();
@@ -79,17 +74,13 @@ contract BloodBank {
 
         // store the aaray index in the map against the user addhar number
         PatientRecordIndex[_aadhar] = index;
-        Registered[_registered] = _aadhar;
-        
+        Registered[_aadhar] = _registered;
 
         emit Successfull("Patient added successfully");
     }
 
     // function to get specific user data
-    function getPatientRecord(uint256 _aadhar)
-        external
-        view
-        returns (Patient memory)
+    function getPatientRecord(uint256 _aadhar) external view returns (Patient memory)
     {
         require(msg.sender == owner , "Only owner can access this data");
         uint256 index = PatientRecordIndex[_aadhar];
@@ -97,28 +88,23 @@ contract BloodBank {
     }
 
     // store the blood txn
-    function bloodTransaction(
-        uint256 _aadhar,
-        PatientType _type,
-        address _from,
-        address _to
-    ) external {
+    function bloodTransaction(uint256 _aadhar,PatientType _type,address _from,address _to) external {
         // check if sender is hospital or not
-        require(
-            msg.sender == owner,
-            "only hospital can update the patient's blood transaction data"
-        );
-
+        require(msg.sender == owner,"only hospital can update the patient's blood transaction data");
+        
+        
         // get at which index the patient registartion details are saved
         uint256 index = PatientRecordIndex[_aadhar];
 
         //insert the BloodTransaction in the record
-        BloodTransaction memory txObj = BloodTransaction({
+        
+            BloodTransaction memory txObj = BloodTransaction({
             patientType: _type,
             time: block.timestamp,
             from: _from,
             to: _to
-        });
+            });
+
 
         PatientRecord[index].bT.push(txObj);
 
